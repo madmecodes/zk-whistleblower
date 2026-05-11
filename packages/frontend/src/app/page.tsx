@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ethers } from "ethers";
 import { WHISTLEBLOWER_ABI, getProvider } from "@/lib/contracts";
 import { WHISTLEBLOWER_ADDRESS } from "@/lib/constants";
-import { IdentityManager } from "@/components/IdentityManager";
 
 interface OrgEntry {
   orgId: bigint;
@@ -67,13 +66,6 @@ export default function Home() {
       </section>
 
       <section>
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-zinc-400">
-          Your Identity
-        </h2>
-        <IdentityManager />
-      </section>
-
-      <section>
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-400">
           Organizations
         </h2>
@@ -114,20 +106,21 @@ export default function Home() {
         <div className="grid gap-6 sm:grid-cols-3">
           <div>
             <h3 className="mb-1 font-semibold text-zinc-200">
-              1. Join an Organization
+              1. Admin Registers Members
             </h3>
             <p className="text-sm text-zinc-500">
-              Generate a ZK identity and share your commitment with the org
-              admin. They add you to the on-chain group.
+              The organization admin adds members by entering their email and a
+              shared password. A ZK identity is derived on-chain automatically.
             </p>
           </div>
           <div>
             <h3 className="mb-1 font-semibold text-zinc-200">
-              2. Submit a Report
+              2. Authenticate & Report
             </h3>
             <p className="text-sm text-zinc-500">
-              Write your report. A zero-knowledge proof is generated proving
-              your membership without revealing who you are.
+              Members enter their email and password to prove membership. A
+              zero-knowledge proof is generated locally -- no server ever sees
+              your identity.
             </p>
           </div>
           <div>
@@ -136,7 +129,7 @@ export default function Home() {
             </h3>
             <p className="text-sm text-zinc-500">
               The report is stored on IPFS and verified on Ethereum. Anyone can
-              confirm it came from a real member.
+              confirm it came from a real member, but nobody can tell who.
             </p>
           </div>
         </div>

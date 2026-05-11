@@ -22,6 +22,25 @@ export function exportIdentity(identity: Identity): string {
   return identity.export();
 }
 
+/**
+ * Derive a deterministic Semaphore identity from email + password + orgId.
+ * Same inputs always produce the same identity, so:
+ *  - Admin enters email+password -> derives commitment -> adds on-chain
+ *  - Member enters same email+password -> derives same identity -> can generate proofs
+ */
+export function deriveIdentity(
+  email: string,
+  password: string,
+  orgId: bigint
+): Identity {
+  const seed = ethers.keccak256(
+    ethers.toUtf8Bytes(
+      email.toLowerCase().trim() + ":" + password + ":" + orgId.toString()
+    )
+  );
+  return new Identity(seed);
+}
+
 export async function fetchGroupMembers(groupId: bigint): Promise<string[]> {
   const semaphoreEthers = new SemaphoreEthers(SEPOLIA_RPC_URL, {
     address: SEMAPHORE_ADDRESS,

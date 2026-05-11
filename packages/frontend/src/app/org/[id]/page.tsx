@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useReports } from "@/hooks/useReports";
 import { getSigner, getWriteContract } from "@/lib/contracts";
-import { IdentityManager } from "@/components/IdentityManager";
+import { deriveIdentity } from "@/lib/semaphore";
 import { ReportCard } from "@/components/ReportCard";
 
 export default function OrgDashboardPage({
@@ -18,26 +18,31 @@ export default function OrgDashboardPage({
   const { org, loading: orgLoading, error: orgError } = useOrganization(orgId);
   const { reports, loading: reportsLoading } = useReports(orgId);
 
-  const [commitment, setCommitment] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [addingMember, setAddingMember] = useState(false);
   const [memberError, setMemberError] = useState<string | null>(null);
-  const [memberSuccess, setMemberSuccess] = useState(false);
+  const [memberSuccess, setMemberSuccess] = useState<string | null>(null);
 
   async function handleAddMember(e: React.FormEvent) {
     e.preventDefault();
-    if (!commitment.trim()) return;
+    if (!email.trim() || !password.trim()) return;
 
     setAddingMember(true);
     setMemberError(null);
-    setMemberSuccess(false);
+    setMemberSuccess(null);
 
     try {
+      const identity = deriveIdentity(email, password, orgId);
+      const commitment = identity.commitment;
+
       const signer = await getSigner();
       const contract = getWriteContract(signer);
-      const tx = await contract.joinOrganization(orgId, BigInt(commitment.trim()));
+      const tx = await contract.joinOrganization(orgId, commitment);
       await tx.wait();
-      setMemberSuccess(true);
-      setCommitment("");
+      setMemberSuccess(email.trim());
+      setEmail("");
+      setPassword("");
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to add member";
@@ -86,37 +91,47 @@ export default function OrgDashboardPage({
 
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-400">
-          Your Identity
-        </h2>
-        <IdentityManager />
-      </section>
-
-      <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-400">
           Add Member (Admin Only)
         </h2>
-        <form onSubmit={handleAddMember} className="flex gap-3">
-          <input
-            type="text"
-            value={commitment}
-            onChange={(e) => setCommitment(e.target.value)}
-            placeholder="Identity commitment (uint256)"
-            disabled={addingMember}
-            className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-blue-500 focus:outline-none disabled:opacity-50"
-          />
+        <p className="mb-3 text-xs text-zinc-500">
+          Enter credentials for the organization member. Share these credentials
+          with them privately -- they will use them to authenticate when
+          submitting anonymous reports.
+        </p>
+        <form onSubmit={handleAddMember} className="space-y-3">
+          <div className="flex gap-3">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Member email"
+              disabled={addingMember}
+              className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-blue-500 focus:outline-none disabled:opacity-50"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              disabled={addingMember}
+              className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-blue-500 focus:outline-none disabled:opacity-50"
+            />
+          </div>
           <button
             type="submit"
-            disabled={addingMember || !commitment.trim()}
+            disabled={addingMember || !email.trim() || !password.trim()}
             className="rounded-lg bg-zinc-700 px-6 py-2.5 text-sm font-medium text-white hover:bg-zinc-600 disabled:opacity-50"
           >
-            {addingMember ? "Adding..." : "Add Member"}
+            {addingMember ? "Adding Member..." : "Add Member"}
           </button>
         </form>
         {memberError && (
           <p className="mt-2 text-sm text-red-400">{memberError}</p>
         )}
         {memberSuccess && (
-          <p className="mt-2 text-sm text-green-400">Member added.</p>
+          <p className="mt-2 text-sm text-green-400">
+            Member {memberSuccess} added. Share the credentials with them.
+          </p>
         )}
       </section>
 
