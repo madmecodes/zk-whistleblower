@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.local
+packages/contracts/typechain-types/
+packages/contracts/artifacts/
+packages/contracts/cache/
+.next/
+out/
+dist/

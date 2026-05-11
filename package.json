@@ -1,0 +1,14 @@
+{
+  "name": "zk-whistleblower",
+  "private": true,
+  "scripts": {
+    "contracts:compile": "pnpm --filter contracts compile",
+    "contracts:test": "pnpm --filter contracts test",
+    "contracts:deploy:sepolia": "pnpm --filter contracts deploy:sepolia",
+    "frontend:dev": "pnpm --filter frontend dev",
+    "frontend:build": "pnpm --filter frontend build"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
