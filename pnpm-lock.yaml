@@ -17,6 +17,9 @@ importers:
       '@semaphore-protocol/contracts':
         specifier: ^4.9.0
         version: 4.14.2
+      '@semaphore-protocol/core':
+        specifier: ^4.14.2
+        version: 4.14.2(@types/snarkjs@0.7.9)(commander@12.1.0)
     devDependencies:
       '@nomicfoundation/hardhat-toolbox':
         specifier: ^5.0.0

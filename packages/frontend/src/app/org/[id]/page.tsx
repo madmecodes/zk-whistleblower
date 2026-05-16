@@ -6,6 +6,8 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useReports } from "@/hooks/useReports";
 import { getSigner, getWriteContract } from "@/lib/contracts";
 import { deriveIdentity } from "@/lib/semaphore";
+import { DEMO_ORG_ID } from "@/lib/constants";
+import { DEMO_ORG } from "@/lib/demo";
 import { ReportCard } from "@/components/ReportCard";
 
 export default function OrgDashboardPage({
@@ -17,6 +19,8 @@ export default function OrgDashboardPage({
   const orgId = BigInt(id);
   const { org, loading: orgLoading, error: orgError } = useOrganization(orgId);
   const { reports, loading: reportsLoading } = useReports(orgId);
+
+  const isDemoOrg = DEMO_ORG_ID !== null && orgId === DEMO_ORG_ID;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -89,6 +93,44 @@ export default function OrgDashboardPage({
         </Link>
       </div>
 
+      {isDemoOrg && (
+        <section>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-400">
+            Registered Employees ({DEMO_ORG.members.length})
+          </h2>
+          <p className="mb-3 text-xs text-zinc-500">
+            Employees verified via corporate email domain (@{DEMO_ORG.domain}).
+            Each member&apos;s ZK identity commitment is registered on-chain.
+          </p>
+          <div className="overflow-hidden rounded-lg border border-zinc-800">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-800 bg-zinc-900">
+                  <th className="px-4 py-2.5 text-left font-medium text-zinc-400">Email</th>
+                  <th className="px-4 py-2.5 text-left font-medium text-zinc-400">Role</th>
+                  <th className="px-4 py-2.5 text-left font-medium text-zinc-400">Department</th>
+                  <th className="px-4 py-2.5 text-left font-medium text-zinc-400">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {DEMO_ORG.members.map((member) => (
+                  <tr key={member.email} className="border-b border-zinc-800/50">
+                    <td className="px-4 py-2 font-mono text-xs text-zinc-300">{member.email}</td>
+                    <td className="px-4 py-2 text-zinc-400">{member.role}</td>
+                    <td className="px-4 py-2 text-zinc-500">{member.department}</td>
+                    <td className="px-4 py-2">
+                      <span className="rounded-full bg-green-950/50 px-2 py-0.5 text-xs text-green-400">
+                        On-chain
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-400">
           Add Member (Admin Only)
@@ -142,7 +184,7 @@ export default function OrgDashboardPage({
         {reportsLoading ? (
           <p className="text-sm text-zinc-600">Loading reports...</p>
         ) : reports.length === 0 ? (
-          <p className="text-sm text-zinc-600">No reports yet.</p>
+          <p className="text-sm text-zinc-600">No reports submitted yet.</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {reports.map((r) => (

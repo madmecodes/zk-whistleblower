@@ -55,7 +55,7 @@ contract WhistleblowerPlatform {
     function createOrganization(
         string calldata _name
     ) external returns (uint256) {
-        uint256 groupId = semaphore.createGroup(msg.sender);
+        uint256 groupId = semaphore.createGroup(address(this));
 
         organizations[groupId] = Organization({
             groupId: groupId,

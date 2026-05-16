@@ -271,7 +271,40 @@ pnpm frontend:dev
 
 Open [http://localhost:3000](http://localhost:3000) in a browser with MetaMask installed.
 
-## Demo Walkthrough
+## Live Demo
+
+**Deployed at**: https://frontend-one-pied-56.vercel.app
+
+The live demo features a pre-populated **Google Inc** organization (Org ID: 543) with 10 registered employees on Ethereum Sepolia. You can immediately test the full flow without setting up anything.
+
+### Demo Credentials
+
+| Email | Password | Role | Department |
+|-------|----------|------|------------|
+| alice.chen@google.com | alice2024 | Software Engineer | Search |
+| bob.martinez@google.com | bob2024 | Product Manager | Cloud |
+| carol.johnson@google.com | carol2024 | Data Scientist | AI Research |
+| david.kim@google.com | david2024 | Security Engineer | Trust & Safety |
+| emma.wright@google.com | emma2024 | Engineering Manager | Ads |
+| frank.patel@google.com | frank2024 | Site Reliability Engineer | Infrastructure |
+| grace.lee@google.com | grace2024 | UX Researcher | Hardware |
+| henry.zhang@google.com | henry2024 | Staff Engineer | Android |
+| iris.thompson@google.com | iris2024 | Legal Counsel | Legal |
+| james.wilson@google.com | james2024 | Finance Analyst | Finance |
+
+### Quick Demo Steps
+
+1. Open the deployed URL, click **"Try Live Demo (Google Inc)"**
+2. Click **"Submit Anonymous Report"**
+3. Enter any employee credentials above (e.g., `alice.chen@google.com` / `alice2024`)
+4. Fill in a report and submit -- you need MetaMask on Sepolia with some ETH
+5. View the submitted report -- it shows "Verified" but reveals nothing about which employee submitted it
+
+### Admin Dashboard Demo
+
+Visit the org dashboard to see the full employee directory pre-registered on-chain. The admin view shows all 10 members with their roles and departments, alongside existing reports.
+
+## Demo Walkthrough (Custom Org)
 
 ### 1. Create an Organization (Admin)
 
@@ -375,9 +408,40 @@ The contract must already be deployed to Sepolia (Step 4 above) before the app w
 | **Censorship resistance** | Report content on IPFS (distributed, content-addressed). Metadata on Ethereum (immutable, decentralized). No single party can remove a report. |
 | **Front-running resistance** | A mempool observer who copies the proof transaction cannot change the CID (bound to message hash) or claim authorship (nullifier tied to prover's key). |
 
-### Known Limitations
+### Known Limitations and Edge Cases
 
-- **Admin knows credentials**: In this demo, the admin sets email + password for members. The admin could theoretically derive a member's identity from their known credentials. In production, members would set their own passwords via self-registration, ensuring the admin never knows the password.
+**Q: The admin sets the password. Can the admin deanonymize members?**
+
+In this demo, yes -- the admin derives commitments from known credentials. In production, the fix is straightforward: members self-register by choosing their own passwords via an email domain verification flow (e.g., send a confirmation code to `alice@google.com`). The admin never sees the password, only the resulting commitment. The demo simplifies this to avoid needing an email server.
+
+**Q: The Ethereum transaction sender (tx.origin) is visible. Doesn't that reveal the whistleblower?**
+
+The transaction sender's wallet address is visible on-chain, but this only proves someone submitted the transaction. In production, this is solved by gas relayers (meta-transactions) or privacy networks like Aztec. The ZK proof itself never leaks the member's identity -- the wallet is just a gas payment mechanism. For this demo, the whistleblower's MetaMask address is unrelated to their corporate identity.
+
+**Q: IPFS content is unencrypted. Can someone censor or read it?**
+
+IPFS is content-addressed and distributed. Once pinned, the content is available from any IPFS gateway. Reports could optionally be encrypted with a public key before pinning. The CID binding in the ZK proof ensures tamper-proofing regardless.
+
+**Q: What if the anonymity set is small? (e.g., only 2-3 members)**
+
+Smaller groups weaken anonymity. With 10 members (demo), there's a 1-in-10 chance of guessing correctly. With 100+ members (production), k-anonymity is much stronger. The ZK proof guarantees are mathematical regardless of group size -- it's the practical inference risk that changes.
+
+**Q: Can two reports from the same person be linked?**
+
+Reports in the same category produce the same nullifier (by design -- spam prevention). Reports in different categories produce different nullifiers and are cryptographically unlinkable. An observer cannot tell if two reports across categories came from the same person.
+
+**Q: How does this compare to SecureDrop / GlobaLeaks?**
+
+SecureDrop relies on Tor + a trusted server. If the server is compromised, all sources are exposed. GlobaLeaks uses server-side encryption. ZK-Whistleblower has no trusted server -- verification is on-chain, storage is on IPFS, and anonymity is a mathematical guarantee rather than a trust assumption.
+
+**Q: What about front-running in the mempool?**
+
+A mempool observer who copies a pending proof transaction cannot: (a) change the report content (bound to IPFS CID via message hash), (b) claim authorship (nullifier is tied to the prover's private key), or (c) extract the identity (the proof reveals nothing). The worst case is a miner censoring the transaction, which the user can retry.
+
+**Q: How does Google (or any corporation) actually register employees?**
+
+In production, the flow would be: (1) Organization registers a domain (google.com), (2) Employee visits the platform and enters their corporate email, (3) Platform sends a verification code to that email, (4) Employee enters the code + chooses a password, (5) Platform derives the ZK commitment and adds it on-chain. The admin never touches individual passwords. This demo pre-populates employees to skip the email verification infrastructure.
+
 - **Proof generation time**: Groth16 proof generation takes 3-8 seconds on modern hardware (laptop/desktop). Mobile devices may take longer.
 - **One report per category**: The nullifier mechanism limits each member to one report per category. A future enhancement could use time-windowed scopes to allow periodic reporting.
 

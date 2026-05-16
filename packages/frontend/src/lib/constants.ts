@@ -13,6 +13,10 @@ export const SEPOLIA_RPC_URL =
 export const PINATA_GATEWAY =
   process.env.NEXT_PUBLIC_PINATA_GATEWAY || "";
 
+export const DEMO_ORG_ID = process.env.NEXT_PUBLIC_DEMO_ORG_ID
+  ? BigInt(process.env.NEXT_PUBLIC_DEMO_ORG_ID)
+  : null;
+
 export const REPORT_CATEGORIES = [
   "fraud",
   "corruption",

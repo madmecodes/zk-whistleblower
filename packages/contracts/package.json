@@ -8,12 +8,13 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.0",
     "dotenv": "^16.4.0",
+    "hardhat": "^2.22.0",
     "ts-node": "^10.9.0",
     "typescript": "^5.5.0"
   },
   "dependencies": {
-    "@semaphore-protocol/contracts": "^4.9.0"
+    "@semaphore-protocol/contracts": "^4.9.0",
+    "@semaphore-protocol/core": "^4.14.2"
   }
 }
