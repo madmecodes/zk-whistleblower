@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ethers } from "ethers";
-import { WHISTLEBLOWER_ABI, getProvider } from "@/lib/contracts";
+import { WHISTLEBLOWER_ABI, getProvider, paginatedQueryFilter } from "@/lib/contracts";
 import { WHISTLEBLOWER_ADDRESS, DEMO_ORG_ID } from "@/lib/constants";
 import { DEMO_ORG } from "@/lib/demo";
 
@@ -30,17 +30,13 @@ export default function Home() {
       provider
     );
 
-    contract
-      .queryFilter(contract.filters.OrganizationCreated())
+    paginatedQueryFilter(contract, contract.filters.OrganizationCreated())
       .then((events) => {
-        const parsed = events.map((e) => {
-          const log = e as ethers.EventLog;
-          return {
-            orgId: log.args[0],
-            name: log.args[1],
-            admin: log.args[2],
-          };
-        });
+        const parsed = events.map((log) => ({
+          orgId: log.args[0],
+          name: log.args[1],
+          admin: log.args[2],
+        }));
         setOrgs(parsed.reverse());
       })
       .catch(console.error)

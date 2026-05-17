@@ -4,7 +4,6 @@ import {
   generateProof,
   type SemaphoreProof,
 } from "@semaphore-protocol/core";
-import { SemaphoreEthers } from "@semaphore-protocol/data";
 import { ethers } from "ethers";
 import { SEMAPHORE_ADDRESS, SEPOLIA_RPC_URL } from "./constants";
 
@@ -42,10 +41,30 @@ export function deriveIdentity(
 }
 
 export async function fetchGroupMembers(groupId: bigint): Promise<string[]> {
-  const semaphoreEthers = new SemaphoreEthers(SEPOLIA_RPC_URL, {
-    address: SEMAPHORE_ADDRESS,
-  });
-  return semaphoreEthers.getGroupMembers(groupId.toString());
+  // Alchemy free tier has strict eth_getLogs block range limits.
+  // We paginate the MemberAdded event query in chunks.
+  const provider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+  const semaphoreAbi = [
+    "event MemberAdded(uint256 indexed groupId, uint256 index, uint256 identityCommitment, uint256 merkleTreeRoot)",
+  ];
+  const contract = new ethers.Contract(SEMAPHORE_ADDRESS, semaphoreAbi, provider);
+
+  const currentBlock = await provider.getBlockNumber();
+  const startBlock = 10830000; // Approximate deployment block
+  const chunkSize = 2000;
+  const members: string[] = [];
+
+  for (let from = startBlock; from <= currentBlock; from += chunkSize) {
+    const to = Math.min(from + chunkSize - 1, currentBlock);
+    const filter = contract.filters.MemberAdded(groupId);
+    const events = await contract.queryFilter(filter, from, to);
+    for (const event of events) {
+      const log = event as ethers.EventLog;
+      members.push(log.args[2].toString());
+    }
+  }
+
+  return members;
 }
 
 export function buildGroup(members: string[]): Group {

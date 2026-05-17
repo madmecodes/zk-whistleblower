@@ -5,6 +5,7 @@ import { ethers } from "ethers";
 import {
   WHISTLEBLOWER_ABI,
   getProvider,
+  paginatedQueryFilter,
 } from "@/lib/contracts";
 import { WHISTLEBLOWER_ADDRESS } from "@/lib/constants";
 import type { ReportData } from "@/lib/types";
@@ -26,20 +27,16 @@ export function useReports(orgId: bigint | null) {
     );
 
     const filter = contract.filters.ReportSubmitted(null, orgId);
-    contract
-      .queryFilter(filter)
+    paginatedQueryFilter(contract, filter)
       .then((events) => {
-        const parsed: ReportData[] = events.map((e) => {
-          const log = e as ethers.EventLog;
-          return {
-            reportId: Number(log.args[0]),
-            orgId: log.args[1],
-            ipfsCid: log.args[2],
-            category: log.args[3],
-            timestamp: log.args[4],
-            nullifier: log.args[5],
-          };
-        });
+        const parsed: ReportData[] = events.map((log) => ({
+          reportId: Number(log.args[0]),
+          orgId: log.args[1],
+          ipfsCid: log.args[2],
+          category: log.args[3],
+          timestamp: log.args[4],
+          nullifier: log.args[5],
+        }));
         setReports(parsed.reverse());
       })
       .catch(console.error)
