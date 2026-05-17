@@ -39,26 +39,26 @@ export async function getSigner(): Promise<ethers.Signer> {
   return provider.getSigner();
 }
 
-// Contract deployment block on Sepolia (approximate).
-const DEPLOY_BLOCK = 10830000;
-const CHUNK_SIZE = 2000;
+// Public Sepolia RPC with no eth_getLogs block range limits.
+// Alchemy free tier restricts to 10 blocks per query, making event
+// scanning impractical. We use a public node for log queries only.
+const LOGS_RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
+
+export function getLogsProvider(): ethers.JsonRpcProvider {
+  return new ethers.JsonRpcProvider(LOGS_RPC_URL);
+}
 
 /**
- * Paginated queryFilter to work within Alchemy free tier block range limits.
+ * Query contract events using the public RPC (no block range limits).
  */
-export async function paginatedQueryFilter(
-  contract: ethers.Contract,
+export async function queryEvents(
   filter: ethers.ContractEventName,
 ): Promise<ethers.EventLog[]> {
-  const provider = contract.runner as ethers.JsonRpcProvider;
-  const currentBlock = await provider.getBlockNumber();
-  const results: ethers.EventLog[] = [];
-
-  for (let from = DEPLOY_BLOCK; from <= currentBlock; from += CHUNK_SIZE) {
-    const to = Math.min(from + CHUNK_SIZE - 1, currentBlock);
-    const events = await contract.queryFilter(filter, from, to);
-    results.push(...(events as ethers.EventLog[]));
-  }
-
-  return results;
+  const contract = new ethers.Contract(
+    WHISTLEBLOWER_ADDRESS,
+    WHISTLEBLOWER_ABI,
+    getLogsProvider()
+  );
+  const events = await contract.queryFilter(filter);
+  return events as ethers.EventLog[];
 }
