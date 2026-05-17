@@ -41,8 +41,9 @@ export function deriveIdentity(
 }
 
 export async function fetchGroupMembers(groupId: bigint): Promise<string[]> {
-  // Use public Sepolia RPC for event log queries (no block range limits).
-  // Alchemy free tier restricts eth_getLogs to 10 blocks per query.
+  // Use public Sepolia RPC for event log queries.
+  // Both Alchemy and publicnode have block range limits, so we query
+  // from a known start block near our contract deployment.
   const provider = new ethers.JsonRpcProvider(
     "https://ethereum-sepolia-rpc.publicnode.com"
   );
@@ -51,7 +52,10 @@ export async function fetchGroupMembers(groupId: bigint): Promise<string[]> {
   ];
   const contract = new ethers.Contract(SEMAPHORE_ADDRESS, semaphoreAbi, provider);
   const filter = contract.filters.MemberAdded(groupId);
-  const events = await contract.queryFilter(filter);
+  // Start from block near our contract deployment (well within 50k limit)
+  const currentBlock = await provider.getBlockNumber();
+  const startBlock = Math.max(0, currentBlock - 40000);
+  const events = await contract.queryFilter(filter, startBlock, currentBlock);
   const members: string[] = [];
   for (const event of events) {
     const log = event as ethers.EventLog;

@@ -26,8 +26,10 @@ export function useReports(orgId: bigint | null) {
     );
 
     const filter = contract.filters.ReportSubmitted(null, orgId);
-    contract
-      .queryFilter(filter)
+    provider.getBlockNumber().then((currentBlock) => {
+      const startBlock = Math.max(0, currentBlock - 40000);
+      return contract.queryFilter(filter, startBlock, currentBlock);
+    })
       .then((events) => {
         const parsed: ReportData[] = events.map((e) => {
           const log = e as ethers.EventLog;

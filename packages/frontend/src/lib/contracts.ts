@@ -48,17 +48,3 @@ export function getLogsProvider(): ethers.JsonRpcProvider {
   return new ethers.JsonRpcProvider(LOGS_RPC_URL);
 }
 
-/**
- * Query contract events using the public RPC (no block range limits).
- */
-export async function queryEvents(
-  filter: ethers.ContractEventName,
-): Promise<ethers.EventLog[]> {
-  const contract = new ethers.Contract(
-    WHISTLEBLOWER_ADDRESS,
-    WHISTLEBLOWER_ABI,
-    getLogsProvider()
-  );
-  const events = await contract.queryFilter(filter);
-  return events as ethers.EventLog[];
-}

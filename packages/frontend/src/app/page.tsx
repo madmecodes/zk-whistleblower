@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { WHISTLEBLOWER_ABI, queryEvents, getLogsProvider } from "@/lib/contracts";
+import { WHISTLEBLOWER_ABI, getLogsProvider } from "@/lib/contracts";
 import { WHISTLEBLOWER_ADDRESS, DEMO_ORG_ID } from "@/lib/constants";
 import { ethers } from "ethers";
 import { DEMO_ORG } from "@/lib/demo";
@@ -30,8 +30,11 @@ export default function Home() {
       logsProvider
     );
 
-    contract
-      .queryFilter(contract.filters.OrganizationCreated())
+    logsProvider.getBlockNumber().then((currentBlock) => {
+    const startBlock = Math.max(0, currentBlock - 40000);
+    return contract
+      .queryFilter(contract.filters.OrganizationCreated(), startBlock, currentBlock);
+    })
       .then((events) => {
         const parsed = events.map((e) => {
           const log = e as ethers.EventLog;
